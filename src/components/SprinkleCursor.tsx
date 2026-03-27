@@ -1,38 +1,40 @@
 'use client';
-import { useEffect, useState } from 'react';
 
-type Sprinkle = {
+import { useEffect, useState, useRef } from 'react';
+
+interface Point {
   id: number;
   x: number;
   y: number;
   color: string;
-};
+  rotation: number;
+}
 
-const colors = ['#FFD1DC', '#E63946', '#FFFFFF'];
+const COLORS = ['#FFD1DC', '#E63946', '#FFFFFF'];
 
 export default function SprinkleCursor() {
-  const [sprinkles, setSprinkles] = useState<Sprinkle[]>([]);
+  const [points, setPoints] = useState<Point[]>([]);
+  const idRef = useRef(0);
 
   useEffect(() => {
-    let lastTime = 0;
-
     const handleMouseMove = (e: MouseEvent) => {
-      const now = Date.now();
-      if (now - lastTime < 50) return; // Throttled to ~20fps
-      lastTime = now;
-
-      const newSprinkle: Sprinkle = {
-        id: now,
+      // Throttle generating new points to avoid too much overhead
+      if (Math.random() > 0.4) return;
+      
+      const newPoint = {
+        id: idRef.current++,
         x: e.clientX,
         y: e.clientY,
-        color: colors[Math.floor(Math.random() * colors.length)]
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        rotation: Math.random() * 360
       };
-
-      setSprinkles(prev => [...prev, newSprinkle]);
-
+      
+      setPoints(prev => [...prev.slice(-20), newPoint]);
+      
+      // Auto-remove the point after animation duration (1s)
       setTimeout(() => {
-        setSprinkles(prev => prev.filter(s => s.id !== newSprinkle.id));
-      }, 800);
+        setPoints(prev => prev.filter(p => p.id !== newPoint.id));
+      }, 1000);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -40,20 +42,21 @@ export default function SprinkleCursor() {
   }, []);
 
   return (
-    <>
-      {sprinkles.map(s => (
+    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
+      {points.map(p => (
         <div
-          key={s.id}
-          className="sprinkle"
+          key={p.id}
+          className="absolute rounded-full animate-fade-out-up shadow-sm border border-black/5"
           style={{
-            left: s.x,
-            top: s.y,
-            backgroundColor: s.color,
-            width: '6px',
-            height: '14px',
+            left: p.x - 4,
+            top: p.y - 4,
+            width: '8px',
+            height: '16px', // Capsule/sprinkle shape
+            backgroundColor: p.color,
+            transform: `rotate(${p.rotation}deg)`
           }}
         />
       ))}
-    </>
+    </div>
   );
 }

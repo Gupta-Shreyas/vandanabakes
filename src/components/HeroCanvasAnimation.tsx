@@ -9,15 +9,17 @@ export default function HeroCanvasAnimation() {
   const { scrollYProgress } = useScroll();
   
   const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const FRAME_COUNT = 240;
+  const FRAME_COUNT = 151;
 
   useEffect(() => {
     // Preload images
     const loadImages = async () => {
       const loadedImages: HTMLImageElement[] = [];
       for (let i = 0; i < FRAME_COUNT; i++) {
+        const paddedIdx = String(i + 1).padStart(4, '0');
+        const timestamp = (i / 30).toFixed(2);
         const img = new Image();
-        img.src = `/frames/frame_${i}.jpg`;
+        img.src = `/video_frames/frame_${paddedIdx}_${timestamp}s.jpg`;
         loadedImages.push(img);
       }
       setImages(loadedImages);

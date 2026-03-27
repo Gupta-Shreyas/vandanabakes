@@ -1,76 +1,77 @@
 'use client';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { Leaf } from 'lucide-react';
+import { BakeryItem } from '@/data/menu';
 
 interface ProductCardProps {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number | null;
-  rating: number;
-  image: string;
-  description?: string;
-  customizableToppings?: string[];
-  cancellationPolicy?: string;
+  product: BakeryItem;
+  onClick: () => void;
 }
 
-export default function ProductCard({
-  name,
-  price,
-  originalPrice,
-  rating,
-  image,
-  description,
-  customizableToppings,
-  cancellationPolicy
-}: ProductCardProps) {
+export default function ProductCard({ product, onClick }: ProductCardProps) {
+  // If it's a jar or cupcake, price is just the single variant.
+  // If cake, we show "Starts from ₹..."
+  const lowestPrice = Math.min(...product.variants.map(v => v.price));
+
   return (
     <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -8 }}
-      className="bg-white rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-shadow border border-[#FFD1DC] flex flex-col"
+      onClick={onClick}
+      className="group bg-white rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer border border-[#FFD1DC] flex flex-col"
     >
-      <div className="aspect-square bg-[#FFF0F5] rounded-3xl mb-6 relative overflow-hidden flex items-center justify-center">
-        <picture className="w-full h-full relative z-10">
-           <img src={image} alt={name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+      {/* HighResZoom Image Container */}
+      <div className="aspect-square bg-[#FFF0F5] rounded-[1.5rem] mb-6 relative overflow-hidden flex items-center justify-center">
+        <picture className="w-full h-full relative z-10 overflow-hidden">
+           <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110" 
+            onError={(e) => { e.currentTarget.style.opacity = '0.5' }} 
+          />
         </picture>
-        {/* Fallback Emoji behind the image */}
+        
+        {/* Placeholder Emoji behind the image */}
         <span className="absolute inset-0 flex items-center justify-center text-6xl drop-shadow-md z-0">🎂</span>
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 shadow-sm text-[#2D1810] z-20">
-          <Star className="w-4 h-4 fill-[#FFD700] text-[#FFD700]" />
-          {rating}
-        </div>
+
+        {/* Dietary Badges */}
+        {product.isEggless && (
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-sm z-20" title="Eggless / 100% Veg">
+            <Leaf className="w-4 h-4 text-green-500 fill-green-500" />
+          </div>
+        )}
+
       </div>
 
-      <div className="flex-grow space-y-4">
+      <div className="p-5 flex flex-col gap-1 flex-grow">
         <div>
-          <h3 className="text-2xl font-bold font-['Nunito'] text-[#2D1810] mb-1 leading-tight">{name}</h3>
-          {description && <p className="text-sm text-[#6B5B53] line-clamp-2">{description}</p>}
+          <span className="text-xs uppercase tracking-wider font-bold text-[#E63946] font-['Nunito'] mb-1 block">
+            {product.category}
+          </span>
+          <h3 className="text-2xl font-bold font-['Nunito'] text-[#2D1810] leading-tight">{product.name}</h3>
         </div>
 
-        {customizableToppings && (
+        {/* Variants Preview */}
         <div className="flex flex-wrap gap-2">
-          {customizableToppings.map(topping => (
-            <span key={topping} className="text-xs px-3 py-1 bg-[#FFF0F5] text-[#6B5B53] rounded-full border border-[#FFD1DC]">
-              + {topping}
+          {product.variants.map(v => (
+            <span key={v.size} className="text-xs px-3 py-1 bg-[#FFF0F5] text-[#6B5B53] font-bold rounded-full border border-[#FFD1DC]">
+              {v.size}
             </span>
           ))}
         </div>
-        )}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-[#FFF0F5] space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-extrabold text-[#2D1810]">₹{price}</p>
-            {originalPrice && (
-              <p className="text-lg text-[#6B5B53] line-through decoration-[#E63946] opacity-70">₹{originalPrice}</p>
-            )}
-          </div>
-          <button className="bg-[#E63946] hover:bg-[#c9303c] transition-colors text-white px-5 py-2 md:px-6 md:py-3 rounded-full font-bold shadow-md hover:shadow-lg">
-            Customize
-          </button>
+      <div className="mt-8 pt-6 border-t border-[#FFD1DC] flex items-center justify-between">
+        <div>
+          {product.variants.length > 1 && <span className="text-xs text-[#6B5B53] font-bold">Starts at</span>}
+          <p className="text-2xl font-extrabold text-[#2D1810]">₹{lowestPrice}</p>
         </div>
+        <button className="bg-[#E63946] shrink-0 text-white w-10 h-10 flex items-center justify-center rounded-full font-bold shadow-md shadow-[#E63946]/30 group-hover:bg-[#c9303c] transition-colors">
+          +
+        </button>
       </div>
     </motion.div>
   );
